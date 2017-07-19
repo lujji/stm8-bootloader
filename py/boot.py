@@ -3,12 +3,12 @@ from time import sleep
 from binascii import crc_hqx
 
 PORT = '/dev/ttyUSB0'
-
+FILE = '../app/firmware.bin'
 REQ_ENTER = bytearray([0xde, 0xad, 0xbe, 0xef])
 CHUNK_SIZE = 64
 
 def fl_open():
-    chunks = os.path.getsize('firmware.bin')
+    chunks = os.path.getsize(FILE)
     chunks = int(math.ceil(float(chunks) / CHUNK_SIZE))
     print 'Need to send', chunks, 'chunks'
     REQ_ENTER.append(chunks)
@@ -20,7 +20,7 @@ def fl_open():
 
 def bootloader_write():
     ser = fl_open()
-    data = open('firmware.bin', 'rb')
+    data = open(FILE, 'rb')
 
     total = 0
     with data as f:

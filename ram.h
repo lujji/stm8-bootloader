@@ -5,6 +5,6 @@
 
 #define BLOCK_SIZE  64
 
-void flash_write_block(uint16_t addr, const uint8_t *buf, uint16_t len);
+void flash_write_block(uint16_t addr, const uint8_t *buf);
 
 #endif /* RAM_H */

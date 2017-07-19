@@ -18,7 +18,7 @@ OBJCOPY  = sdobjcopy
 CFLAGS   = -m$(ARCH) -p$(MCU) --std-sdcc11
 CFLAGS  += -DF_CPU=$(F_CPU)UL -I.
 CFLAGS  += --stack-auto --noinduction --use-non-free --opt-code-size
-LDFLAGS  = -m$(ARCH) -l$(ARCH) --out-fmt-ihx --code-loc 0x8000
+LDFLAGS  = -m$(ARCH) -l$(ARCH) --out-fmt-ihx
 
 all: $(TARGET) size
 

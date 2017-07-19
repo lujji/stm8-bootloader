@@ -5,18 +5,19 @@
 #define BAUDRATE        115200
 #define UART_DIV        ((F_CPU + BAUDRATE / 2) / BAUDRATE)
 
-#define ADDR            (0x8000 + 0x1000)
+#define ADDR            (0x8000 + 0x400)
 #define CHUNK_SIZE      64
 #define RX_BUFFER_LEN   (128 + 16)
 #define LED_PIN         4
-#define BOOT()          ((boot*) 0x9000)()
+//#define BOOT(addr)      ((boot*) addr)()
+#define BOOT()          __asm__("jp 0x8400")
 
 typedef void boot();
 
 static uint8_t RX_BUFFER[RX_BUFFER_LEN];
 static uint8_t f_ram[128];
 static uint8_t chunks;
-static void (*flash_write_block_RAM)(uint16_t addr, const uint8_t *buf, uint16_t len);
+static void (*flash_write_block_RAM)(uint16_t addr, const uint8_t *buf);
 
 inline void uart_init() {
     /* madness.. */
@@ -88,8 +89,14 @@ inline void bootloader_exec() {
     for (uint8_t i = 0; i < chunks; i++) {
         serial_send_ack();
         serial_read_buf(CHUNK_SIZE);
-        flash_write_block_RAM(addr, RX_BUFFER, CHUNK_SIZE);
+        flash_write_block_RAM(addr, RX_BUFFER);
         addr += CHUNK_SIZE;
+    }
+
+    /* copy application IVT */
+    for (uint8_t i = 4; i < 128; i++) {
+        _MEM_(0x8000 + i) = _MEM_(ADDR + i);
+        while (!(FLASH_IAPSR & (1 << FLASH_IAPSR_EOP)));
     }
 
     /* lock flash */
@@ -100,8 +107,14 @@ inline void ram_cpy() {
     uint8_t len = get_section_length();
     for (uint8_t i = 0; i < len; i++)
         f_ram[i] = ((uint8_t *) &flash_write_block)[i];
-    flash_write_block_RAM = (void (*)(uint16_t, const uint8_t *, uint16_t len)) &f_ram;
+    flash_write_block_RAM = (void (*)(uint16_t, const uint8_t *)) &f_ram;
 }
+
+// void timer_isr() __interrupt(TIM4_ISR) {
+//     __asm__("jp 0x9064");
+// }
+
+void dummy_isr() __interrupt(29) __naked { ; }
 
 void main() {
     ram_cpy();
@@ -114,5 +127,5 @@ void main() {
     PD_ODR = (1 << LED_PIN);
 
     /* jump to application */
-    __asm__("jp 0x9000");
+    __asm__("jp 0x8400");
 }

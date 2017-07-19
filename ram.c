@@ -2,14 +2,9 @@
 #include <stm8s.h>
 
 #pragma codeseg RAM_SEG
-void flash_write_block(uint16_t addr, const uint8_t *buf, uint16_t len) {
-    const uint8_t *end = buf + len;
-    volatile uint8_t *mem = (volatile uint8_t *)(addr);
-
-//     /* unlock flash */
-//     FLASH_PUKR = FLASH_PUKR_KEY1;
-//     FLASH_PUKR = FLASH_PUKR_KEY2;
-//     while (!(FLASH_IAPSR & (1 << FLASH_IAPSR_PUL)));
+void flash_write_block(uint16_t addr, const uint8_t *buf) {
+    const uint8_t *end = buf + BLOCK_SIZE;
+    uint8_t *mem = (uint8_t *)(addr);
 
     /* enable block programming */
     FLASH_CR2 = 1 << FLASH_CR2_PRG;
