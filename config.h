@@ -4,6 +4,7 @@
 #include "stm8s.h"
 
 #define BAUDRATE        115200
+#define RELOCATE_IVT    0
 
 /* flash block size */
 #define BLOCK_SIZE      64
@@ -18,8 +19,5 @@
 #define BOOT_PIN        3
 #define BOOT_PIN_IDR    PD_IDR
 #define BOOT_PIN_CR1    PD_CR1
-
-typedef void boot();
-#define BOOT_CALL(addr) ((boot*) addr)()
 
 #endif /* CONFIG_H */

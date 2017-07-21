@@ -1,6 +1,5 @@
 import serial, os, math
 from time import sleep
-from struct import pack, unpack
 
 PORT = '/dev/ttyUSB0'
 FILE = '../app/firmware.bin'
@@ -19,25 +18,6 @@ def crc8_update(data, crc):
             crc <<= 1
     return crc & 0xFF
 
-def port_open():
-    req = bytearray(REQ_ENTER)
-    chunks = os.path.getsize(FILE)
-    chunks = int(math.ceil(float(chunks) / BLOCK_SIZE))
-    print 'Need to send', chunks, 'chunks'
-    req.append(chunks)
-    crc = get_crc()
-    print 'CRC = ', hex(crc)
-    req.append(crc)
-    req.append(crc)
-    #crc = pack('<H', crc)
-    #req.extend(crc)
-    #print [hex(i) for i in req]
-
-    ser = serial.Serial(PORT, 115200, timeout=1.0)
-    ser.write(req)
-    ser.flushOutput()
-    return ser
-
 def get_crc():
     crc = 0
     data = open(FILE, 'rb')
@@ -45,14 +25,25 @@ def get_crc():
         chunk = bytearray(f.read(BLOCK_SIZE))
         while chunk:
             chunk.extend([0xFF] * (BLOCK_SIZE - len(chunk)))
-            #crc = crc_hqx(chunk, crc)
             for i in chunk:
                 crc = crc8_update(i, crc)
             chunk = bytearray(f.read(BLOCK_SIZE))
     return crc
 
+def bootloader_enter(ser):
+    req = bytearray(REQ_ENTER)
+    chunks = os.path.getsize(FILE)
+    chunks = int(math.ceil(float(chunks) / BLOCK_SIZE))
+    print 'Need to send', chunks, 'chunks'
+    crc = get_crc()
+    req.extend([chunks, crc, crc])
+    ser.write(req)
+    ser.flushOutput()
+    return ser
+
 def bootloader_write():
-    ser = port_open()
+    ser = serial.Serial(PORT, 115200, timeout=2.0)
+    bootloader_enter(ser)
     data = open(FILE, 'rb')
     total = 0
     with data as f:
@@ -69,9 +60,9 @@ def bootloader_write():
             ser.flushOutput()
             chunk = bytearray(f.read(BLOCK_SIZE))
         ack = ser.read(2)
-        print ' '.join(i.encode('hex') for i in ack)
         if ack == bytearray(NACK):
             print 'CRC mismatch'
+            return
         print 'Done'
     ser.close()
 

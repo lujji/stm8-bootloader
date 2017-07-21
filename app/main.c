@@ -7,12 +7,9 @@ volatile uint16_t ctr = 0;
 
 void dummy_isr() __interrupt(29) __naked { ; }
 
-void blink() {
-    PD_ODR ^= (1 << LED_PIN);
-}
 void timer_isr() __interrupt(TIM4_ISR) {
     if (++ctr >= 64) {
-        blink();
+        PD_ODR ^= (1 << LED_PIN);
         ctr = 0;
     }
     TIM4_SR &= ~(1 << TIM4_SR_UIF);
@@ -44,7 +41,6 @@ void main() {
     timer_config();
 
     while (1) {
-//         PD_ODR ^= (1 << LED_PIN);
-//         delay_ms(250);
+        //
     }
 }
