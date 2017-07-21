@@ -10,8 +10,9 @@
 #define RX_BUFFER_LEN   (BLOCK_SIZE + 8)
 
 /* application address */
-#define BOOT_ADDR       0x8400
-#define BOOT()          __asm__("jp 0x8400")
+#define BOOT_ADDR        0x8400
+#define BOOT_ADDR_S     "0x8400"
+#define BOOT()          __asm__("jp " BOOT_ADDR_S)
 
 /* entry jumper */
 #define BOOT_PIN        3

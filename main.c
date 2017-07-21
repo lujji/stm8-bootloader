@@ -1,17 +1,10 @@
 #include <stdint.h>
 #include "stm8s.h"
 #include "ram.h"
+#include "debug.h"
+//#include "isr.h"
 
 #define UART_DIV ((F_CPU + BAUDRATE / 2) / BAUDRATE)
-
-#define DBG_PIN  4
-inline void DBG_INIT() {
-    PD_DDR |= 1 << DBG_PIN;
-    PD_CR1 |= 1 << DBG_PIN;
-}
-#define SET() do { PD_ODR |= (1 << DBG_PIN);  } while (0);
-#define CLR() do { PD_ODR &= ~(1 << DBG_PIN); } while (0);
-#define TOG() do { PD_ODR ^= (1 << DBG_PIN);  } while (0);
 
 static uint8_t rx_buffer[RX_BUFFER_LEN];
 static uint8_t ivt[128];
@@ -20,30 +13,17 @@ static void (*flash_write_block_ram)(uint16_t addr, const uint8_t *buf);
 
 void dummy_isr() __interrupt(29) __naked { ; }
 
-static uint8_t get_section_length()
-{
-    volatile int len;
+static uint8_t get_ram_section_length() {
+    volatile uint16_t len;
     __asm
-        ldw x, #l_RAM_SEG
-        ldw (0x01, sp), x
+        ldw x,#l_RAM_SEG
+        ldw(0x01, sp), x
     __endasm;
     return len;
 }
 
 inline void iwdg_init() {
-    /* enable IWDG */
     IWDG_KR = IWDG_KEY_ENABLE;
-
-    /* enable write access */
-    //IWDG_KR = IWDG_KEY_ACCESS;
-
-    /* prescaler = 64 */
-    //IWDG_PR = 4;
-
-    /* timeout = 250ms */
-    //IWDG_RLR = 0xFA;
-
-    /* reload watchdog counter */
     IWDG_KR = IWDG_KEY_REFRESH;
 }
 
@@ -70,15 +50,51 @@ static uint8_t uart_read() {
     return UART1_DR;
 }
 
+uint8_t crc8_update(uint8_t data, uint8_t crc) {
+    crc ^= data;
+    for (uint8_t i = 0; i < 8; i++) {
+        iwdg_refresh();
+        crc = (crc & 0x80) ? (crc << 1) ^ 0x07 : crc << 1;
+    }
+    return crc;
+}
+
+uint8_t crc8(const uint8_t *src, uint8_t len, uint8_t crc) {
+    const uint8_t *end = src + len;
+    while (src < end)
+        crc = crc8_update(*src++, crc);
+    return crc;
+}
+
+inline uint8_t get_crc8(uint8_t chunks) {
+    uint8_t crc = 0;
+    crc = crc8(ivt, 128, crc);
+    crc = crc8((uint8_t *) BOOT_ADDR, BLOCK_SIZE * chunks, crc);
+    return crc;
+}
+
 static void serial_send_ack() {
     uart_write(0xAA);
     uart_write(0xBB);
 }
 
+inline void serial_send_nack() {
+    uart_write(0xDE);
+    uart_write(0xAD);
+}
+
+void serial_read_block(uint8_t *dest) {
+    const uint8_t *end = dest + BLOCK_SIZE;
+    serial_send_ack();
+    while (dest < end)
+        *dest++ = uart_read();
+}
+
 inline void bootloader_exec() {
-    uint8_t chunks;
-    uint16_t addr = BOOT_ADDR;
+    uint8_t i;
+    uint8_t chunks, crc_rx, crc;
     uint8_t *ivt_ptr = ivt;
+    uint16_t addr = BOOT_ADDR;
 
     /* enter bootloader */
     for (;;) {
@@ -91,6 +107,10 @@ inline void bootloader_exec() {
         rx = uart_read();
         if (rx != 0xEF) continue;
         chunks = uart_read();
+        crc_rx = uart_read();
+        rx = uart_read();
+        if (crc_rx != rx)
+            continue;
         break;
     }
 
@@ -100,51 +120,49 @@ inline void bootloader_exec() {
     while (!(FLASH_IAPSR & (1 << FLASH_IAPSR_PUL)));
 
     /* get application interrupt table */
-    for (uint8_t i = 0; i < 2; i++) {
-        serial_send_ack();
-        for (uint8_t j = 0; j < BLOCK_SIZE; j++)
-            *ivt_ptr++ = uart_read();
-    }
+    serial_read_block(ivt_ptr);
+    serial_read_block(ivt_ptr + 64);
 
     /* get main firmware */
-    for (uint8_t i = 2; i < chunks; i++) {
-        serial_send_ack();
-        for (uint8_t j = 0; j < BLOCK_SIZE; j++)
-            rx_buffer[j] = uart_read();
+    for (i = 2; i < chunks; i++) {
+        serial_read_block(rx_buffer);
         flash_write_block_ram(addr, rx_buffer);
         addr += BLOCK_SIZE;
     }
 
     /* verify CRC */
-    /// @TODO
+    crc = get_crc8(chunks - 2);
+    if (crc != crc_rx) {
+        serial_send_nack();
+        for (;;);
+    }
 
     /* copy application interrupt vector table */
-    for (uint8_t i = 4; i < 2 * BLOCK_SIZE; i++) {
-        _MEM_(0x8000 + i) = ivt[i];
-        iwdg_refresh();
-        while (!(FLASH_IAPSR & (1 << FLASH_IAPSR_EOP)));
-    }
+    *(uint32_t *) ivt = *(uint32_t *) (0x8000);
+    flash_write_block_ram(0x8000, ivt);
+    flash_write_block_ram(0x8000 + 64, &ivt[64]);
 
     /* lock flash */
     FLASH_IAPSR &= ~(1 << FLASH_IAPSR_PUL);
 
+    serial_send_ack();
+
     /* reboot */
-    for(;;);
+    for (;;);
 }
 
 inline void ram_cpy() {
-    uint8_t len = get_section_length();
+    uint8_t len = get_ram_section_length();
     for (uint8_t i = 0; i < len; i++)
         f_ram[i] = ((uint8_t *) &flash_write_block)[i];
     flash_write_block_ram = (void (*)(uint16_t, const uint8_t *)) &f_ram;
 }
 
+// size: 750 -> 744 -> 738 -> 729
 void main() {
     BOOT_PIN_CR1 = 1 << BOOT_PIN;
-    DBG_INIT();
     if (!(BOOT_PIN_IDR & (1 << BOOT_PIN))) {
         /* execute bootloader */
-        SET();
         ram_cpy();
         iwdg_init();
         uart_init();
@@ -152,6 +170,6 @@ void main() {
     } else {
         /* jump to application */
         BOOT_PIN_CR1 = 0x00;
-        __asm__("jp 0x8400");
+        BOOT();
     }
 }
