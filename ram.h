@@ -2,8 +2,7 @@
 #define RAM_H
 
 #include <stdint.h>
-
-#define BLOCK_SIZE  64
+#include "config.h"
 
 void flash_write_block(uint16_t addr, const uint8_t *buf);
 

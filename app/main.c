@@ -3,10 +3,16 @@
 
 #define LED_PIN     4
 
+volatile uint16_t ctr = 0;
+
+void dummy_isr() __interrupt(29) __naked { ; }
+
+void blink() {
+    PD_ODR ^= (1 << LED_PIN);
+}
 void timer_isr() __interrupt(TIM4_ISR) {
-    static uint16_t ctr = 0;
     if (++ctr >= 64) {
-        PD_ODR ^= (1 << LED_PIN);
+        blink();
         ctr = 0;
     }
     TIM4_SR &= ~(1 << TIM4_SR_UIF);

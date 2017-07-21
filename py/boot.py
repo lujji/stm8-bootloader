@@ -7,7 +7,7 @@ FILE = '../app/firmware.bin'
 REQ_ENTER = bytearray([0xde, 0xad, 0xbe, 0xef])
 CHUNK_SIZE = 64
 
-def fl_open():
+def port_open():
     chunks = os.path.getsize(FILE)
     chunks = int(math.ceil(float(chunks) / CHUNK_SIZE))
     print 'Need to send', chunks, 'chunks'
@@ -19,7 +19,7 @@ def fl_open():
     return ser
 
 def bootloader_write():
-    ser = fl_open()
+    ser = port_open()
     data = open(FILE, 'rb')
 
     total = 0
@@ -33,6 +33,7 @@ def bootloader_write():
             ser.write(chunk)
             ser.flushOutput()
             chunk = bytearray(f.read(CHUNK_SIZE))
+    ser.close()
 
 bootloader_write()
 print 'Done'
