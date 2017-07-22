@@ -4,6 +4,6 @@
 #include <stdint.h>
 #include "config.h"
 
-void flash_write_block(uint16_t addr, const uint8_t *buf);
+void ram_flash_write_block(uint16_t addr, const uint8_t *buf);
 
 #endif /* RAM_H */

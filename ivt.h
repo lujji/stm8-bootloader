@@ -29,7 +29,7 @@ void isr25() __interrupt(25) __naked { __asm__("jp " BOOT_ADDR_S "+0x6c"); }
 void isr26() __interrupt(26) __naked { __asm__("jp " BOOT_ADDR_S "+0x70"); }
 void isr27() __interrupt(27) __naked { __asm__("jp " BOOT_ADDR_S "+0x74"); }
 void isr28() __interrupt(28) __naked { __asm__("jp " BOOT_ADDR_S "+0x78"); }
-void isr29() __interrupt(29) __naked { __asm__("jp " BOOT_ADDR_S "+0x82"); }
+void isr29() __interrupt(29) __naked { __asm__("jp " BOOT_ADDR_S "+0x7C"); }
 #else
 void isr29() __interrupt(29) __naked { ; }
 #endif

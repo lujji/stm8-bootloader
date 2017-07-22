@@ -3,40 +3,44 @@ export PATH := $(PATH):$(HOME)/local/sdcc/bin
 MCU  = stm8s003f3
 ARCH = stm8
 
-F_CPU   ?= 2000000
+#F_CPU   ?= 2000000
+F_CPU   ?= 16000000
 TARGET  ?= main.ihx
 
-#LIBDIR   = ../../stm8
+SRCS    := $(wildcard *.c)
+ASRCS	:= ivt.asm
 
-SRCS    := $(wildcard *.c $(LIBDIR)/*.c)
-#SRCS	:= $(filter-out ram.c, $(SRCS))
 OBJS     = $(SRCS:.c=.rel)
+OBJS	+= $(ASRCS:.asm=.rel)
 
 CC       = sdcc
 LD       = sdld
+AS       = sdasstm8
 OBJCOPY  = sdobjcopy
-CFLAGS   = -m$(ARCH) -p$(MCU) --std-sdcc11
+CFLAGS   = -m$(ARCH) -p$(MCU)
 CFLAGS  += -DF_CPU=$(F_CPU)UL -I.
-CFLAGS  += --stack-auto --noinduction --use-non-free --opt-code-size
+CFLAGS  += --stack-auto --noinduction --use-non-free --noinvariant
 LDFLAGS  = -m$(ARCH) -l$(ARCH) --out-fmt-ihx
+LDFLAGS += -Wl-bIVT=0x8000 -Wl-bGSINIT=0x8080
+#-Wl-bCODE=0x8080
+#-Wl-bGSINIT=0x8080
 
 all: $(TARGET) size
-
-# $(TARGET): $(OBJS)
-# 	$(CC) $(CFLAGS) $(INCLUDE) --codeseg RAM_SEG -c ram.c -o ram.rel
-# 	$(CC) $(LDFLAGS) $(OBJS) ram.rel -o $@
 
 $(TARGET): $(OBJS)
 	$(CC) $(LDFLAGS) $(OBJS) -o $@
 
+%.rel: %.asm
+	$(AS) -plosgff $(ASRCS)
+
 %.rel: %.c
-	$(CC) $(CFLAGS) $(INCLUDE) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
 flash: $(TARGET)
 	stm8flash -c stlinkv2 -p $(MCU) -w $(TARGET)
 
 clean:
-	rm -f *.map *.asm *.rel *.ihx *.o *.sym *.lk *.lst *.rst *.cdb *.bin
+	rm -f *.map *.rel *.ihx *.o *.sym *.lk *.lst *.rst *.cdb *.bin $(SRCS:.c=.asm)
 
 size:
 	@$(OBJCOPY) -I ihex --output-target=binary $(TARGET) $(TARGET).bin

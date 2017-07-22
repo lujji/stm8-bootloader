@@ -42,7 +42,7 @@ def bootloader_enter(ser):
     return ser
 
 def bootloader_write():
-    ser = serial.Serial(PORT, 115200, timeout=2.0)
+    ser = serial.Serial(PORT, 115200, timeout=1.0)
     bootloader_enter(ser)
     data = open(FILE, 'rb')
     total = 0

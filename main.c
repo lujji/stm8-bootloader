@@ -1,25 +1,22 @@
 #include <stdint.h>
 #include "stm8s.h"
 #include "ram.h"
-#include "ivt.h"
-//#include "debug.h"
 
 #define UART_DIV ((F_CPU + BAUDRATE / 2) / BAUDRATE)
 
 static uint8_t CRC;
-static uint8_t rx_buffer[RX_BUFFER_LEN];
 static uint8_t ivt[128];
 static uint8_t f_ram[128];
-static void (*flash_write_block_ram)(uint16_t addr, const uint8_t *buf);
+static uint8_t rx_buffer[RX_BUFFER_LEN];
+static void (*flash_write_block)(uint16_t addr, const uint8_t *buf) = (void (*)(uint16_t, const uint8_t *)) f_ram;
 
 #pragma save
 #pragma disable_warning 84
 static uint8_t get_ram_section_length() {
-    volatile uint16_t len;
-    (void) len;
+    volatile uint8_t len;
     __asm
-        ldw x,#l_RAM_SEG
-        ldw(0x01, sp), x
+        ld a, #l_RAM_SEG
+        ld (0x01, sp), a
     __endasm;
     return len;
 }
@@ -74,11 +71,10 @@ inline void serial_send_nack() {
 }
 
 static void serial_read_block(uint8_t *dest) {
-    const uint8_t *end = dest + BLOCK_SIZE;
     serial_send_ack();
-    while (dest < end) {
+    for (uint8_t i = 0; i < BLOCK_SIZE; i++) {
         uint8_t rx =  uart_read();
-        *dest++ = rx;
+        dest[i] = rx;
         CRC = crc8_update(rx, CRC);
     }
 }
@@ -120,7 +116,7 @@ inline void bootloader_exec() {
     /* get main firmware */
     for (uint8_t i = 0; i < chunks; i++) {
         serial_read_block(rx_buffer);
-        flash_write_block_ram(addr, rx_buffer);
+        flash_write_block(addr, rx_buffer);
         addr += BLOCK_SIZE;
     }
 
@@ -133,8 +129,8 @@ inline void bootloader_exec() {
 #if !RELOCATE_IVT
     /* copy application interrupt vector table */
     *(uint32_t *) ivt = *(uint32_t *) (0x8000);
-    flash_write_block_ram(0x8000, ivt);
-    flash_write_block_ram(0x8000 + BLOCK_SIZE, ivt + BLOCK_SIZE);
+    flash_write_block(0x8000, ivt);
+    flash_write_block(0x8000 + BLOCK_SIZE, ivt + BLOCK_SIZE);
 #endif
 
     /* lock flash */
@@ -149,15 +145,15 @@ inline void bootloader_exec() {
 inline void ram_cpy() {
     uint8_t len = get_ram_section_length();
     for (uint8_t i = 0; i < len; i++)
-        f_ram[i] = ((uint8_t *) &flash_write_block)[i];
-    flash_write_block_ram = (void (*)(uint16_t, const uint8_t *)) &f_ram;
+        f_ram[i] = ((uint8_t *) ram_flash_write_block)[i];
 }
 
-// size: 750 -> 744 -> 738 -> 729 -> 721 -> 658
-void main() {
+// size: 750 -> 744 -> 738 -> 729 -> 721 -> 658 -> 644:654 -> 640:560
+void bootloader_main() {
     BOOT_PIN_CR1 = 1 << BOOT_PIN;
     if (!(BOOT_PIN_IDR & (1 << BOOT_PIN))) {
         /* execute bootloader */
+        CLK_CKDIVR = 0;
         ram_cpy();
         iwdg_init();
         uart_init();

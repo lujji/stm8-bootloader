@@ -4,6 +4,11 @@
 #include "stm8s.h"
 
 #define BAUDRATE        115200
+
+/*
+ * 0 = overwrite vector table during update,
+ * 1 = use default jump-table
+ */
 #define RELOCATE_IVT    0
 
 /* flash block size */

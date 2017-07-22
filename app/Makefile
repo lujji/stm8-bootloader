@@ -14,7 +14,7 @@ LD       = sdld
 OBJCOPY  = sdobjcopy
 CFLAGS   = -m$(ARCH) -p$(MCU) --std-sdcc11
 CFLAGS  += -DF_CPU=$(F_CPU)UL -I. -I$(LIBDIR)
-CFLAGS  += --stack-auto --noinduction --use-non-free --opt-code-size
+CFLAGS  += --stack-auto --noinduction --use-non-free
 LDFLAGS  = -m$(ARCH) -l$(ARCH) --out-fmt-ihx
 LDFLAGS += --code-loc 0x8380
 #LDFLAGS += --code-loc 0x8400
@@ -26,7 +26,7 @@ $(TARGET): $(OBJS)
 	@$(OBJCOPY) -I ihex --output-target=binary $(TARGET) firmware.bin
 
 %.rel: %.c
-	$(CC) $(CFLAGS) $(INCLUDE) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
 flash: $(TARGET)
 	stm8flash -c stlinkv2 -p $(MCU) -w $(TARGET)
