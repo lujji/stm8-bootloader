@@ -8,10 +8,10 @@ F_CPU   ?= 16000000
 TARGET  ?= main.ihx
 
 SRCS    := $(wildcard *.c)
-ASRCS	:= ivt.asm
+ASRCS	:= $(wildcard *.s)
 
 OBJS     = $(SRCS:.c=.rel)
-OBJS	+= $(ASRCS:.asm=.rel)
+OBJS	+= $(ASRCS:.s=.rel)
 
 CC       = sdcc
 LD       = sdld
@@ -30,7 +30,7 @@ all: $(TARGET) size
 $(TARGET): $(OBJS)
 	$(CC) $(LDFLAGS) $(OBJS) -o $@
 
-%.rel: %.asm
+%.rel: %.s
 	$(AS) -plosgff $(ASRCS)
 
 %.rel: %.c

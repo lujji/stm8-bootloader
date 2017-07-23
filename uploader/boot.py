@@ -41,7 +41,7 @@ def bootloader_enter(ser):
     ser.flushOutput()
     return ser
 
-def bootloader_write():
+def bootloader_exec():
     ser = serial.Serial(PORT, 115200, timeout=1.0)
     bootloader_enter(ser)
     data = open(FILE, 'rb')
@@ -67,4 +67,4 @@ def bootloader_write():
     ser.close()
 
 if __name__ == "__main__":
-    bootloader_write()
+    bootloader_exec()

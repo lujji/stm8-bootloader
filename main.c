@@ -4,25 +4,29 @@
 
 #define UART_DIV ((F_CPU + BAUDRATE / 2) / BAUDRATE)
 
+static volatile uint8_t RAM_SEG_LEN;
 static uint8_t CRC;
 static uint8_t ivt[128];
 static uint8_t f_ram[128];
 static uint8_t rx_buffer[RX_BUFFER_LEN];
 static void (*flash_write_block)(uint16_t addr, const uint8_t *buf) = (void (*)(uint16_t, const uint8_t *)) f_ram;
 
-#pragma save
-#pragma disable_warning 84
-static uint8_t get_ram_section_length() {
-    volatile uint8_t len;
+/**
+ * Write length of RAM_SEG section into RAM_SEG_LEN
+ */
+inline void get_ram_section_length() {
     __asm
+        push a
         ld a, #l_RAM_SEG
-        ld (0x01, sp), a
+        ld _RAM_SEG_LEN, a
+        pop a
     __endasm;
-    return len;
 }
-#pragma restore
 
-/* prescaler = 32, timeout = 63.70ms */
+/**
+ * Initialize watchdog:
+ * prescaler = 32, timeout = 63.70ms
+ */
 inline void iwdg_init() {
     IWDG_KR = IWDG_KEY_ENABLE;
     IWDG_KR = IWDG_KEY_ACCESS;
@@ -30,10 +34,16 @@ inline void iwdg_init() {
     IWDG_KR = IWDG_KEY_REFRESH;
 }
 
+/**
+ * Kick the dog
+ */
 inline void iwdg_refresh() {
     IWDG_KR = IWDG_KEY_REFRESH;
 }
 
+/**
+ * Initialize UART1 in 8N1 mode
+ */
 inline void uart_init() {
     /* madness.. */
     UART1_BRR2 = ((UART_DIV >> 8) & 0xF0) + (UART_DIV & 0x0F);
@@ -42,17 +52,31 @@ inline void uart_init() {
     UART1_CR2 = (1 << UART1_CR2_TEN) | (1 << UART1_CR2_REN);
 }
 
+/**
+ * Write byte into UART
+ */
 static void uart_write(uint8_t data) {
     UART1_DR = data;
     while (!(UART1_SR & (1 << UART1_SR_TC)));
 }
 
+/**
+ * Read byte from UART and reset watchdog
+ */
 static uint8_t uart_read() {
     iwdg_refresh();
     while (!(UART1_SR & (1 << UART1_SR_RXNE)));
     return UART1_DR;
 }
 
+/**
+ * Calculate CRC-8-CCIT.
+ * Polynomial: x^8 + x^2 + x + 1 (0x07)
+ *
+ * @param data input byte
+ * @param crc initial CRC
+ * @return CRC value
+ */
 inline uint8_t crc8_update(uint8_t data, uint8_t crc) {
     crc ^= data;
     for (uint8_t i = 0; i < 8; i++)
@@ -60,25 +84,39 @@ inline uint8_t crc8_update(uint8_t data, uint8_t crc) {
     return crc;
 }
 
+/**
+ * Send ACK response
+ */
 static void serial_send_ack() {
     uart_write(0xAA);
     uart_write(0xBB);
 }
 
+/**
+ * Send NACK response (CRC mismatch)
+ */
 inline void serial_send_nack() {
     uart_write(0xDE);
     uart_write(0xAD);
 }
 
+/**
+ * Read BLOCK_SIZE bytes from UART
+ *
+ * @param dest destination buffer
+ */
 static void serial_read_block(uint8_t *dest) {
     serial_send_ack();
     for (uint8_t i = 0; i < BLOCK_SIZE; i++) {
-        uint8_t rx =  uart_read();
+        uint8_t rx = uart_read();
         dest[i] = rx;
         CRC = crc8_update(rx, CRC);
     }
 }
 
+/**
+ * Enter bootloader and perform firmware update
+ */
 inline void bootloader_exec() {
     uint8_t chunks, crc_rx;
     uint16_t addr = BOOT_ADDR;
@@ -142,13 +180,16 @@ inline void bootloader_exec() {
     for (;;);
 }
 
+/**
+ * Copy ram_flash_write_block routine into RAM
+ */
 inline void ram_cpy() {
-    uint8_t len = get_ram_section_length();
-    for (uint8_t i = 0; i < len; i++)
+    get_ram_section_length();
+    for (uint8_t i = 0; i < RAM_SEG_LEN; i++)
         f_ram[i] = ((uint8_t *) ram_flash_write_block)[i];
 }
 
-// size: 750 -> 744 -> 738 -> 729 -> 721 -> 658 -> 644:654 -> 640:560
+// size: 750 -> 744 -> 738 -> 729 -> 721 -> 658 -> 644:654 -> 640:560 -> 633:553
 void bootloader_main() {
     BOOT_PIN_CR1 = 1 << BOOT_PIN;
     if (!(BOOT_PIN_IDR & (1 << BOOT_PIN))) {
