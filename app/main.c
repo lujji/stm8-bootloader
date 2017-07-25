@@ -7,7 +7,7 @@ volatile uint16_t ctr = 0;
 
 void dummy_isr() __interrupt(29) __naked { ; }
 
-void timer_isr() __interrupt(TIM4_ISR) {
+void timer_isr() __interrupt(TIM4_ISR) __naked {
     if (++ctr >= 64) {
         PD_ODR ^= (1 << LED_PIN);
         ctr = 0;

@@ -4,23 +4,18 @@
 
 #define UART_DIV ((F_CPU + BAUDRATE / 2) / BAUDRATE)
 
-static volatile uint8_t RAM_SEG_LEN;
 static uint8_t CRC;
 static uint8_t ivt[128];
 static uint8_t f_ram[128];
 static uint8_t rx_buffer[RX_BUFFER_LEN];
+static volatile uint8_t RAM_SEG_LEN;
 static void (*flash_write_block)(uint16_t addr, const uint8_t *buf) = (void (*)(uint16_t, const uint8_t *)) f_ram;
 
 /**
- * Write length of RAM_SEG section into RAM_SEG_LEN
+ * Write RAM_SEG section length into RAM_SEG_LEN
  */
 inline void get_ram_section_length() {
-    __asm
-        push a
-        ld a, #l_RAM_SEG
-        ld _RAM_SEG_LEN, a
-        pop a
-    __endasm;
+    __asm__("mov _RAM_SEG_LEN, #l_RAM_SEG");
 }
 
 /**
@@ -165,7 +160,7 @@ inline void bootloader_exec() {
     }
 
 #if !RELOCATE_IVT
-    /* copy application interrupt vector table */
+    /* overwrite vector table preserving the reset interrupt */
     *(uint32_t *) ivt = *(uint32_t *) (0x8000);
     flash_write_block(0x8000, ivt);
     flash_write_block(0x8000 + BLOCK_SIZE, ivt + BLOCK_SIZE);

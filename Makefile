@@ -8,10 +8,10 @@ F_CPU   ?= 16000000
 TARGET  ?= main.ihx
 
 SRCS    := $(wildcard *.c)
-ASRCS	:= $(wildcard *.s)
+ASRCS   := $(wildcard *.s)
 
 OBJS     = $(SRCS:.c=.rel)
-OBJS	+= $(ASRCS:.s=.rel)
+OBJS    += $(ASRCS:.s=.rel)
 
 CC       = sdcc
 LD       = sdld
@@ -22,8 +22,6 @@ CFLAGS  += -DF_CPU=$(F_CPU)UL -I.
 CFLAGS  += --stack-auto --noinduction --use-non-free --noinvariant
 LDFLAGS  = -m$(ARCH) -l$(ARCH) --out-fmt-ihx
 LDFLAGS += -Wl-bIVT=0x8000 -Wl-bGSINIT=0x8080
-#-Wl-bCODE=0x8080
-#-Wl-bGSINIT=0x8080
 
 all: $(TARGET) size
 
@@ -40,7 +38,7 @@ flash: $(TARGET)
 	stm8flash -c stlinkv2 -p $(MCU) -w $(TARGET)
 
 clean:
-	rm -f *.map *.rel *.ihx *.o *.sym *.lk *.lst *.rst *.cdb *.bin $(SRCS:.c=.asm)
+	rm -f *.map *.rel *.ihx *.o *.sym *.lk *.lst *.rst *.cdb *.bin *.asm
 
 size:
 	@$(OBJCOPY) -I ihex --output-target=binary $(TARGET) $(TARGET).bin
