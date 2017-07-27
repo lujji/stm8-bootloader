@@ -6,7 +6,7 @@
 #define BAUDRATE        115200
 
 /* application address */
-#define BOOT_ADDR       0x8400
+#define BOOT_ADDR       0x8280
 
 /*
  * 0 = overwrite vector table during update,
@@ -16,7 +16,6 @@
 
 /* flash block size */
 #define BLOCK_SIZE      64
-#define RX_BUFFER_LEN   (BLOCK_SIZE + 8)
 
 /* entry jumper */
 #define BOOT_PIN        3

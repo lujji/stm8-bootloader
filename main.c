@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include "config.h"
 #include "stm8s.h"
 #include "ram.h"
 
@@ -7,9 +8,10 @@
 static uint8_t CRC;
 static uint8_t ivt[128];
 static uint8_t f_ram[128];
-static uint8_t rx_buffer[RX_BUFFER_LEN];
+static uint8_t rx_buffer[BLOCK_SIZE];
 static volatile uint8_t RAM_SEG_LEN;
-static void (*flash_write_block)(uint16_t addr, const uint8_t *buf) = (void (*)(uint16_t, const uint8_t *)) f_ram;
+static void (*flash_write_block)(uint16_t addr, const uint8_t *buf) =
+        (void (*)(uint16_t, const uint8_t *)) f_ram;
 
 /**
  * Write RAM_SEG section length into RAM_SEG_LEN
@@ -184,7 +186,7 @@ inline void ram_cpy() {
         f_ram[i] = ((uint8_t *) ram_flash_write_block)[i];
 }
 
-// size: 750 -> 744 -> 738 -> 729 -> 721 -> 658 -> 644:654 -> 640:560 -> 633:553
+// size: 750 -> 744 -> 738 -> 729 -> 721 -> 658 -> 644:654 -> 640:560 -> 627:547
 void bootloader_main() {
     BOOT_PIN_CR1 = 1 << BOOT_PIN;
     if (!(BOOT_PIN_IDR & (1 << BOOT_PIN))) {

@@ -19,7 +19,7 @@ AS       = sdasstm8
 OBJCOPY  = sdobjcopy
 CFLAGS   = -m$(ARCH) -p$(MCU)
 CFLAGS  += -DF_CPU=$(F_CPU)UL -I.
-CFLAGS  += --stack-auto --noinduction --use-non-free --noinvariant
+CFLAGS  += --stack-auto --noinduction --use-non-free --noinvariant --opt-code-size
 LDFLAGS  = -m$(ARCH) -l$(ARCH) --out-fmt-ihx
 LDFLAGS += -Wl-bIVT=0x8000 -Wl-bGSINIT=0x8080
 
@@ -29,7 +29,7 @@ $(TARGET): $(OBJS)
 	$(CC) $(LDFLAGS) $(OBJS) -o $@
 
 %.rel: %.s
-	$(AS) -plosgff $(ASRCS)
+	$(AS) -plosgff $<
 
 %.rel: %.c
 	$(CC) $(CFLAGS) -c $< -o $@

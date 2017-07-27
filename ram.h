@@ -2,7 +2,6 @@
 #define RAM_H
 
 #include <stdint.h>
-#include "config.h"
 
 void ram_flash_write_block(uint16_t addr, const uint8_t *buf);
 

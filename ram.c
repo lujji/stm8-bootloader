@@ -1,5 +1,6 @@
 #include "ram.h"
 #include "stm8s.h"
+#include "config.h"
 
 #pragma codeseg RAM_SEG
 void ram_flash_write_block(uint16_t addr, const uint8_t *buf) {
