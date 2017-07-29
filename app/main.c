@@ -1,24 +1,17 @@
 #include <stdint.h>
 #include "../stm8s.h"
 
-#define LED_PIN     4
-
-volatile uint16_t ctr = 0;
+#define LED_PIN  4
 
 void dummy_isr() __interrupt(29) __naked { ; }
 
-void timer_isr() __interrupt(TIM4_ISR) __naked {
+void tim4_isr() __interrupt(TIM4_ISR) {
+    static uint16_t ctr = 0;
     if (++ctr >= 64) {
         PD_ODR ^= (1 << LED_PIN);
         ctr = 0;
     }
     TIM4_SR &= ~(1 << TIM4_SR_UIF);
-}
-
-inline void delay_ms(uint32_t ms) {
-    for (uint32_t i = 0; i < ((F_CPU / 18 / 1000UL) * ms); i++) {
-        __asm__("nop");
-    }
 }
 
 inline void timer_config() {
@@ -41,6 +34,6 @@ void main() {
     timer_config();
 
     while (1) {
-        //
+        /* interrupts do the job */
     }
 }

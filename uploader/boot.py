@@ -1,12 +1,12 @@
 import serial, os, math, argparse
 from time import sleep
 
-FILE = None
+BLOCK_SIZE = 64 # 128 for parts with >8k flash
 
 REQ_ENTER = [0xde, 0xad, 0xbe, 0xef]
 ACK  = [0xaa, 0xbb]
 NACK = [0xde, 0xad]
-BLOCK_SIZE = 64
+FILE = None
 
 def crc8_update(data, crc):
     crc ^= data

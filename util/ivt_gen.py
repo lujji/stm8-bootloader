@@ -33,6 +33,6 @@ epilogue = (
     '    jp  _bootloader_main')
 
 for i in prologue: print(i)
-for i in range(0, 30):
+for i in range(30):
     print('jump %s ; int%d' % (hex(i * 4 + 8), i))
 for i in epilogue: print(i)
