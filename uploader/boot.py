@@ -3,9 +3,9 @@ from time import sleep
 
 BLOCK_SIZE = 64 # 128 for parts with >8k flash
 
-REQ_ENTER = [0xde, 0xad, 0xbe, 0xef]
-ACK  = [0xaa, 0xbb]
-NACK = [0xde, 0xad]
+REQ_ENTER = (0xde, 0xad, 0xbe, 0xef)
+ACK  = (0xaa, 0xbb)
+NACK = (0xde, 0xad)
 FILE = None
 
 def crc8_update(data, crc):
@@ -59,10 +59,12 @@ def bootloader_exec(port, baud):
             ser.flushOutput()
             chunk = bytearray(f.read(BLOCK_SIZE))
         ack = ser.read(2)
-        if ack == bytearray(NACK):
+        if ack == bytearray(ACK):
+            print('Done')
+        elif ack == bytearray(NACK):
             print('CRC mismatch')
-            return
-        print('Done')
+        else:
+            print('Invalid response')
     ser.close()
 
 if __name__ == "__main__":

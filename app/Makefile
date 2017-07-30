@@ -1,16 +1,13 @@
-export PATH := $(PATH):$(HOME)/local/sdcc/bin
-
-MCU  = stm8s003f3
+MCU ?= stm8s003f3
 ARCH = stm8
 
 F_CPU   ?= 2000000
 TARGET  ?= main.ihx
 
-SRCS    := $(wildcard *.c $(LIBDIR)/*.c)
+SRCS    := $(wildcard *.c)
 OBJS     = $(SRCS:.c=.rel)
 
 CC       = sdcc
-LD       = sdld
 OBJCOPY  = sdobjcopy
 CFLAGS   = -m$(ARCH) -p$(MCU)
 CFLAGS  += -DF_CPU=$(F_CPU)UL -I. -I$(LIBDIR)
@@ -33,4 +30,4 @@ $(TARGET): $(OBJS)
 clean:
 	rm -f *.map *.asm *.rel *.ihx *.o *.sym *.lk *.lst *.rst *.cdb *.bin
 
-.PHONY: clean all program
+.PHONY: clean all

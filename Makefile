@@ -1,9 +1,6 @@
-export PATH := $(PATH):$(HOME)/local/sdcc/bin
-
-MCU  = stm8s003f3
+MCU ?= stm8s003f3
 ARCH = stm8
 
-#F_CPU   ?= 2000000
 F_CPU   ?= 16000000
 TARGET  ?= main.ihx
 
@@ -17,6 +14,7 @@ CC       = sdcc
 LD       = sdld
 AS       = sdasstm8
 OBJCOPY  = sdobjcopy
+ASFLAGS  = -plosgff
 CFLAGS   = -m$(ARCH) -p$(MCU)
 CFLAGS  += -DF_CPU=$(F_CPU)UL -I.
 CFLAGS  += --stack-auto --noinduction --use-non-free --noinvariant --opt-code-size
@@ -29,7 +27,7 @@ $(TARGET): $(OBJS)
 	$(CC) $(LDFLAGS) $(OBJS) -o $@
 
 %.rel: %.s
-	$(AS) -plosgff $<
+	$(AS) $(ASFLAGS) $<
 
 %.rel: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
@@ -42,17 +40,27 @@ clean:
 
 size:
 	@$(OBJCOPY) -I ihex --output-target=binary $(TARGET) $(TARGET).bin
-	@echo "-----\nImage size:"
+	@echo '-----\nImage size:'
 	@stat -L -c %s $(TARGET).bin
 
-opt-dump:
-	stm8flash -c stlinkv2 -p stm8s003f3 -s opt -r dump_opt.bin
+# enable write-protection on first 10 pages
+opt-set:
+	@echo '0x00 0x0a 0xf5 0x00 0xff 0x00 0xff 0x00 0xff 0x00 0xff' | xxd -r > opt.bin
+	stm8flash -c stlinkv2 -p stm8s003f3 -s opt -w opt.bin
 
-mem-dump:
-	stm8flash -c stlinkv2 -p stm8s003f3 -s flash -r dump_flash.bin
+# reset option-bytes to factory defaults
+opt-reset:
+	@echo '0x00 0x00 0xff 0x00 0xff 0x00 0xff 0x00 0xff 0x00 0xff' | xxd -r > opt.bin
+	stm8flash -c stlinkv2 -p stm8s003f3 -s opt -w opt.bin
+
+dump-opt:
+	stm8flash -c stlinkv2 -p $(MCU) -s opt -r dump_opt.bin
+
+dump-flash:
+	stm8flash -c stlinkv2 -p $(MCU) -s flash -r dump_flash.bin
 
 erase:
 	tr '\000' '\377' < /dev/zero | dd of=empty.bin bs=8192 count=1
-	stm8flash -c stlinkv2 -p stm8s003f3 -s flash -w empty.bin
+	stm8flash -c stlinkv2 -p $(MCU) -s flash -w empty.bin
 
-.PHONY: clean all program
+.PHONY: clean all flash size dump-opt dump-flash erase

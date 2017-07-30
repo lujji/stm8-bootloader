@@ -191,7 +191,6 @@ inline void ram_cpy() {
         f_ram[i] = ((uint8_t *) ram_flash_write_block)[i];
 }
 
-// size: 750 -> 744 -> 738 -> 729 -> 721 -> 658 -> 644:654 -> 640:560 -> 623:547
 void bootloader_main() {
     BOOT_PIN_CR1 = 1 << BOOT_PIN;
     if (!(BOOT_PIN_IDR & (1 << BOOT_PIN))) {

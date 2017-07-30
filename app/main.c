@@ -14,7 +14,7 @@ void tim4_isr() __interrupt(TIM4_ISR) {
     TIM4_SR &= ~(1 << TIM4_SR_UIF);
 }
 
-inline void timer_config() {
+static void timer_config() {
     /* Prescaler = 128 */
     TIM4_PSCR = 0b00000111;
 
