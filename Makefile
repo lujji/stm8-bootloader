@@ -40,7 +40,7 @@ clean:
 
 size:
 	@$(OBJCOPY) -I ihex --output-target=binary $(TARGET) $(TARGET).bin
-	@echo '-----\nImage size:'
+	@echo "-----\nImage size:"
 	@stat -L -c %s $(TARGET).bin
 
 # enable write-protection on first 10 pages

@@ -30,6 +30,11 @@ def get_crc():
     return crc
 
 def bootloader_enter(ser):
+    # toggle reset via DTR
+    ser.setDTR(True)
+    sleep(0.1)
+    ser.setDTR(False)
+    # send payload
     req = bytearray(REQ_ENTER)
     chunks = os.path.getsize(FILE)
     chunks = int(math.ceil(float(chunks) / BLOCK_SIZE))
