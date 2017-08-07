@@ -5,6 +5,10 @@
 
 #define BAUDRATE        115200
 
+/* internal RC oscillator, CKDIVR = 0 */
+#define F_CPU           16000000UL
+#define UART_DIV         ((F_CPU + BAUDRATE / 2) / BAUDRATE)
+
 /* application address */
 #define BOOT_ADDR       0x8280
 

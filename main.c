@@ -3,8 +3,6 @@
 #include "stm8s.h"
 #include "ram.h"
 
-#define UART_DIV ((F_CPU + BAUDRATE / 2) / BAUDRATE)
-
 static uint8_t CRC;
 static uint8_t ivt[128];
 static uint8_t f_ram[128];

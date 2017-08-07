@@ -1,7 +1,6 @@
 MCU ?= stm8s003f3
 ARCH = stm8
 
-F_CPU   ?= 16000000
 TARGET  ?= main.ihx
 
 SRCS    := $(wildcard *.c)
@@ -15,8 +14,7 @@ LD       = sdld
 AS       = sdasstm8
 OBJCOPY  = sdobjcopy
 ASFLAGS  = -plosgff
-CFLAGS   = -m$(ARCH) -p$(MCU)
-CFLAGS  += -DF_CPU=$(F_CPU)UL -I.
+CFLAGS   = -m$(ARCH) -p$(MCU) -I.
 CFLAGS  += --stack-auto --noinduction --use-non-free --noinvariant --opt-code-size
 LDFLAGS  = -m$(ARCH) -l$(ARCH) --out-fmt-ihx
 LDFLAGS += -Wl-bIVT=0x8000 -Wl-bGSINIT=0x8080
@@ -45,7 +43,7 @@ size:
 
 # enable write-protection on first 10 pages
 opt-set:
-	@echo '0x00 0x0a 0xf5 0x00 0xff 0x00 0xff 0x00 0xff 0x00 0xff' | xxd -r > opt.bin
+	@echo '0x00 0x09 0xf6 0x00 0xff 0x00 0xff 0x00 0xff 0x00 0xff' | xxd -r > opt.bin
 	stm8flash -c stlinkv2 -p stm8s003f3 -s opt -w opt.bin
 
 # reset option-bytes to factory defaults

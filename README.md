@@ -1,9 +1,9 @@
 # stm8-bootloader
-Serial bootloader for STM8S microcontrollers.
+Serial bootloader for STM8S microcontrollers. A detailed write-up on this bootloader is posted [here](https://lujji.github.io/blog/serial-bootloader-for-stm8).
 
 ## Features
 
-* **small** - fits in 9 pages (547 bytes w/ SDCC v3.6.8 #9951)
+* **small** - fits in 547 bytes (SDCC v3.6.8 #9951)
 * **fast** - uploads 4k binary in 1 second @115200bps
 * **configurable** - can be adjusted for parts with different flash block size
 
@@ -29,7 +29,7 @@ Build and flash the bootloader:
 $ make && make flash
 ```
 
-Enable write-protection (UBC) on pages 0-10:
+Enable write-protection (UBC) on pages 0-9:
 
 ``` bash
 $ make opt-set
