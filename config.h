@@ -1,7 +1,7 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#include "stm8s.h"
+#include "stm8.h"
 
 #define BAUDRATE        115200
 

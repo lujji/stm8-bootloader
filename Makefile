@@ -1,5 +1,10 @@
-MCU ?= stm8s003f3
-ARCH = stm8
+# MCU     ?= stm8s003f3
+# FAMILY  ?= STM8S
+
+MCU     ?= stm8l051f3
+FAMILY  ?= STM8L
+
+ARCH     = stm8
 
 TARGET  ?= main.ihx
 
@@ -14,7 +19,7 @@ LD       = sdld
 AS       = sdasstm8
 OBJCOPY  = sdobjcopy
 ASFLAGS  = -plosgff
-CFLAGS   = -m$(ARCH) -p$(MCU) -I.
+CFLAGS   = -m$(ARCH) -p$(MCU) -D$(FAMILY) -I.
 CFLAGS  += --stack-auto --noinduction --use-non-free --noinvariant --opt-code-size
 LDFLAGS  = -m$(ARCH) -l$(ARCH) --out-fmt-ihx
 LDFLAGS += -Wl-bIVT=0x8000 -Wl-bGSINIT=0x8080
@@ -41,6 +46,7 @@ size:
 	@echo "-----\nImage size:"
 	@stat -L -c %s $(TARGET).bin
 
+## @TODO: separate option-bytes for stm8s and stm8l!
 # enable write-protection on first 10 pages
 opt-set:
 	@echo '0x00 0x09 0xf6 0x00 0xff 0x00 0xff 0x00 0xff 0x00 0xff' | xxd -r > opt.bin

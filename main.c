@@ -1,6 +1,6 @@
 #include <stdint.h>
 #include "config.h"
-#include "stm8s.h"
+#include "stm8.h"
 #include "ram.h"
 
 static uint8_t CRC;
@@ -40,6 +40,10 @@ inline void iwdg_refresh() {
  * Initialize UART1 in 8N1 mode
  */
 inline void uart_init() {
+#if STM8L
+    /* enable USART1 clock */
+    CLK_PCKENR1 |= (1 << 5);
+#endif
     /* madness.. */
     UART1_BRR2 = ((UART_DIV >> 8) & 0xF0) + (UART_DIV & 0x0F);
     UART1_BRR1 = UART_DIV >> 4;
@@ -159,7 +163,7 @@ inline void bootloader_exec() {
     /* verify CRC */
     if (CRC != crc_rx) {
         serial_send_nack();
-        for (;;);
+        for (;;) ;
     }
 
 #if !RELOCATE_IVT
@@ -177,7 +181,7 @@ inline void bootloader_exec() {
     serial_send_ack();
 
     /* reboot */
-    for (;;);
+    for (;;) ;
 }
 
 /**

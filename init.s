@@ -38,6 +38,7 @@ jump 0x74 ; int27
 jump 0x78 ; int28
 jump 0x7c ; int29
 
+.area SSEG
 .area GSINIT
 init:
     ldw x, #l_DATA
