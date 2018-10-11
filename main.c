@@ -40,23 +40,21 @@ inline void iwdg_refresh() {
  * Initialize UART1 in 8N1 mode
  */
 inline void uart_init() {
-#if STM8L
-    /* enable USART1 clock */
-    CLK_PCKENR1 |= (1 << 5);
-#endif
+    /* enable UART clock (STM8L only)*/
+    UART_CLK_ENABLE();
     /* madness.. */
-    UART1_BRR2 = ((UART_DIV >> 8) & 0xF0) + (UART_DIV & 0x0F);
-    UART1_BRR1 = UART_DIV >> 4;
+    UART_BRR2 = ((UART_DIV >> 8) & 0xF0) + (UART_DIV & 0x0F);
+    UART_BRR1 = UART_DIV >> 4;
     /* enable transmitter and receiver */
-    UART1_CR2 = (1 << UART1_CR2_TEN) | (1 << UART1_CR2_REN);
+    UART_CR2 = (1 << UART_CR2_TEN) | (1 << UART_CR2_REN);
 }
 
 /**
  * Write byte into UART
  */
 static void uart_write(uint8_t data) {
-    UART1_DR = data;
-    while (!(UART1_SR & (1 << UART1_SR_TC)));
+    UART_DR = data;
+    while (!(UART_SR & (1 << UART_SR_TC)));
 }
 
 /**
@@ -64,8 +62,8 @@ static void uart_write(uint8_t data) {
  */
 static uint8_t uart_read() {
     iwdg_refresh();
-    while (!(UART1_SR & (1 << UART1_SR_RXNE)));
-    return UART1_DR;
+    while (!(UART_SR & (1 << UART_SR_RXNE)));
+    return UART_DR;
 }
 
 /**

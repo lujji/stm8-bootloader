@@ -1,5 +1,5 @@
 #include <stdint.h>
-#include "../stm8s.h"
+#include "../stm8.h"
 
 #define LED_PIN  4
 
@@ -15,6 +15,9 @@ void tim4_isr() __interrupt(TIM4_ISR) {
 }
 
 static void timer_config() {
+#if STM8L
+    CLK_PCKENR1 |= 1 << 2;
+#endif
     /* Prescaler = 128 */
     TIM4_PSCR = 0b00000111;
 

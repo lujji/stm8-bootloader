@@ -6,7 +6,7 @@
 void ram_flash_write_block(uint16_t addr, const uint8_t *buf) {
     /* enable block programming */
     FLASH_CR2 = 1 << FLASH_CR2_PRG;
-#if !STM8L
+#if !(STM8L)
     FLASH_NCR2 = (uint8_t) ~(1 << FLASH_NCR2_NPRG);
 #endif
 

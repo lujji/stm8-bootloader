@@ -1,5 +1,6 @@
-MCU ?= stm8s003f3
-ARCH = stm8
+MCU     ?= stm8s003f3
+FAMILY  ?= STM8S
+ARCH     = stm8
 
 F_CPU   ?= 2000000
 TARGET  ?= main.ihx
@@ -9,7 +10,7 @@ OBJS     = $(SRCS:.c=.rel)
 
 CC       = sdcc
 OBJCOPY  = sdobjcopy
-CFLAGS   = -m$(ARCH) -p$(MCU)
+CFLAGS   = -m$(ARCH) -p$(MCU) -D$(FAMILY)
 CFLAGS  += -DF_CPU=$(F_CPU)UL -I. -I$(LIBDIR)
 CFLAGS  += --stack-auto --noinduction --use-non-free
 LDFLAGS  = -m$(ARCH) -l$(ARCH) --out-fmt-ihx
