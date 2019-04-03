@@ -1,5 +1,5 @@
 # stm8-bootloader
-Serial bootloader for STM8S microcontrollers. A detailed write-up on this bootloader is posted [here](https://lujji.github.io/blog/serial-bootloader-for-stm8).
+Serial bootloader for STM8S and STM8L microcontrollers. A detailed write-up on this bootloader is posted [here](https://lujji.github.io/blog/serial-bootloader-for-stm8).
 
 ## Features
 
@@ -9,7 +9,9 @@ Serial bootloader for STM8S microcontrollers. A detailed write-up on this bootlo
 
 ## Configuration
 
-The default configuration targets low-density devices (STM8S003). Configuration is located in `config.h`.
+The default configuration targets low-density devices (STM8S003). To compile for a different target `MCU` and `FAMILY` makefile variables are adjusted accordingly.
+
+Bootloader configuration is located in `config.h`.
 * **BLOCK_SIZE** - flash block size according to device datasheet. This should be set to 64 for low-density devices or 128 for devices with >8k flash.
 * **BOOT_ADDR** - application boot address.
 * **BOOT_PIN** - entry jumper. This is set to PD3 by default.
@@ -29,7 +31,7 @@ Build and flash the bootloader:
 $ make && make flash
 ```
 
-Enable write-protection (UBC) on pages 0-9:
+Enable write-protection (UBC) on pages 0-9 _(TODO: must be adjusted for STML)_:
 
 ``` bash
 $ make opt-set
@@ -43,6 +45,3 @@ There is a demo application inside `app` directory which toggles PD4 via interru
 $ cd app && make
 $ python ../uploader/boot.py -p /dev/ttyUSB0 firmware.bin
 ```
-
-## Porting
-TBD
