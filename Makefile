@@ -25,6 +25,14 @@ CFLAGS   = -m$(ARCH) -p$(MCU) -D$(FAMILY) -I.
 CFLAGS  += --stack-auto --noinduction --use-non-free --noinvariant --opt-code-size
 LDFLAGS  = -m$(ARCH) -l$(ARCH) --out-fmt-ihx
 LDFLAGS += -Wl-bIVT=0x8000 -Wl-bGSINIT=0x8080
+OS := $(shell uname -s)
+ifeq ($(OS),Linux)
+    STAT = stat -L -c %s
+endif
+ifeq ($(OS),Darwin)
+    STAT = stat -L
+endif
+
 
 all: $(TARGET) size
 
@@ -46,21 +54,26 @@ clean:
 size:
 	@$(OBJCOPY) -I ihex --output-target=binary $(TARGET) $(TARGET).bin
 	@echo "-----\nImage size:"
-	@stat -L -c %s $(TARGET).bin
+	@$(STAT) $(TARGET).bin
 
 ## @TODO: separate option-bytes for stm8s and stm8l!
 # enable write-protection on first 10 pages
-opt-set:
+enable-wpr:
 	@echo '0x00 0x09 0xf6 0x00 0xff 0x00 0xff 0x00 0xff 0x00 0xff' | xxd -r > opt.bin
 	stm8flash -c stlinkv2 -p stm8s003f3 -s opt -w opt.bin
 
 # reset option-bytes to factory defaults
-opt-reset:
+reset-opt:
 	@echo '0x00 0x00 0xff 0x00 0xff 0x00 0xff 0x00 0xff 0x00 0xff' | xxd -r > opt.bin
+	stm8flash -c stlinkv2 -p stm8s003f3 -s opt -w opt.bin
+
+enable-rop:
+	@echo '0xaa' | xxd -r > opt.bin
 	stm8flash -c stlinkv2 -p stm8s003f3 -s opt -w opt.bin
 
 dump-opt:
 	stm8flash -c stlinkv2 -p $(MCU) -s opt -r dump_opt.bin
+	xxd dump_opt.bin
 
 dump-flash:
 	stm8flash -c stlinkv2 -p $(MCU) -s flash -r dump_flash.bin

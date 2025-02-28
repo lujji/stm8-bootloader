@@ -15,7 +15,8 @@
 #endif
 
 /* application address */
-#define BOOT_ADDR           0x8280
+/* increase this for larger bootloaders! */
+#define BOOT_ADDR           0x8520
 
 /*
  * 0 = overwrite vector table during update,
