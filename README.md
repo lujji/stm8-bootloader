@@ -34,7 +34,13 @@ $ make && make flash
 Enable write-protection (UBC) on pages 0-9 _(TODO: must be adjusted for STML)_:
 
 ``` bash
-$ make opt-set
+$ make enable-wpr
+```
+
+Enable read-out protection (ROP):
+
+```bash
+$ make enable-rop
 ```
 
 ## Uploading the firmware
