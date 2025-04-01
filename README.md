@@ -1,6 +1,8 @@
 # stm8-bootloader
 Serial bootloader for STM8S and STM8L microcontrollers. A detailed write-up on this bootloader is posted [here](https://lujji.github.io/blog/serial-bootloader-for-stm8).
 
+I am no longer maintaining this repo - for more features check out [this fork](https://github.com/MKesenheimer/stm8-bootloader) by **MKesenheimer**.
+
 ## Features
 
 * **small** - fits in 547 bytes (SDCC v3.6.8 #9951)
